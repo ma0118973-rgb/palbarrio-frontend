@@ -2193,6 +2193,35 @@ try{refresh();buildJobSchema()}catch(e){}
   setInterval(updateRealNotifBadge, 30000);
   // Update on load
   setTimeout(updateRealNotifBadge, 2000);
+
+  // === FIX: Profile type switching (Personal/Portfolio/Mi Tienda) ===
+  var PB_PROFILE_TYPE = localStorage.getItem('pb_profile_type') || 'personal';
+  document.addEventListener('click', function(ev) {
+    var btn = ev.target.closest('[data-pbx-type]');
+    if (!btn) return;
+    var ptype = btn.getAttribute('data-pbx-type');
+    if (!ptype) return;
+    ev.preventDefault();
+    PB_PROFILE_TYPE = ptype;
+    localStorage.setItem('pb_profile_type', ptype);
+    // Update button states
+    document.querySelectorAll('[data-pbx-type]').forEach(function(b) {
+      b.classList.toggle('on', b.getAttribute('data-pbx-type') === ptype);
+    });
+    // Show toast
+    var names = {personal: 'Perfil Personal', portfolio: 'Portafolio', shop: 'Mi Tienda', tienda: 'Mi Tienda'};
+    try { if (typeof toast === 'function') toast('✓ ' + (names[ptype] || ptype)); } catch(e) {}
+    // Re-render profile if we're on profile view
+    try {
+      if (typeof renderProfile === 'function') renderProfile();
+    } catch(e) {}
+  }, false);
+  // Restore saved type on load
+  setTimeout(function() {
+    document.querySelectorAll('[data-pbx-type]').forEach(function(b) {
+      b.classList.toggle('on', b.getAttribute('data-pbx-type') === PB_PROFILE_TYPE);
+    });
+  }, 1000);
 })();
 </script>
 
