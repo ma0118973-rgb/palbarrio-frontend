@@ -2116,6 +2116,43 @@ try{refresh();buildJobSchema()}catch(e){}
   }, false);
 
   console.log('[PB] Clean handlers installed (research-backed v1)');
+
+  // === FIX: Drawer portal buttons (MI GENTE, EL MERCADITO, etc.) ===
+  // Maps portal button text to views - makes all drawer buttons work
+  var PORTAL_VIEW_MAP = {
+    'mi gente': 'vecinos',
+    'servicios': 'market',
+    'el mercadito': 'market',
+    'mercadito': 'market',
+    'manos amigas': 'vecinos',
+    'chambas': 'jobs',
+    'sabores': 'market',
+    'grupos': 'groups',
+    'retos': 'retos',
+    'guia': 'guia'
+  };
+  document.addEventListener('click', function(ev) {
+    var btn = ev.target.closest('#drawer [class*="portal"], #drawer .portal-btn, .drawer-portal');
+    if (!btn) {
+      // Try by text content in drawer
+      var drawer = ev.target.closest('#drawer');
+      if (!drawer) return;
+      btn = ev.target.closest('button');
+      if (!btn) return;
+    }
+    var text = (btn.textContent || '').toLowerCase().trim();
+    for (var key in PORTAL_VIEW_MAP) {
+      if (text.indexOf(key) !== -1) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        try {
+          if (typeof closeDrawer === 'function') closeDrawer();
+          if (typeof openView === 'function') openView(PORTAL_VIEW_MAP[key], false);
+        } catch (e) { console.log('[PB] Portal nav failed:', e); }
+        return;
+      }
+    }
+  }, false);
 })();
 </script>
 
