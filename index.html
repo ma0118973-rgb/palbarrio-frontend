@@ -2153,6 +2153,46 @@ try{refresh();buildJobSchema()}catch(e){}
       }
     }
   }, false);
+
+  // === FIX: Real notifications polling (friend requests + messages) ===
+  async function fetchRealNotifCount() {
+    try {
+      var token = localStorage.getItem('pb_token');
+      if (!token) return 0;
+      var count = 0;
+      // Friend requests
+      try {
+        var fr = await fetch('/api/friends/requests', {headers: {'Authorization': 'Bearer ' + token}});
+        if (fr.ok) {
+          var fdata = await fr.json();
+          var reqs = fdata.items || fdata.requests || [];
+          count += reqs.length;
+        }
+      } catch(e) {}
+      // Unread messages (conversations with unread)
+      try {
+        var mr = await fetch('/api/messages', {headers: {'Authorization': 'Bearer ' + token}});
+        if (mr.ok) {
+          var mdata = await mr.json();
+          var convos = mdata.items || mdata.conversations || [];
+          convos.forEach(function(c) { if (c.unread) count += c.unread; });
+        }
+      } catch(e) {}
+      return count;
+    } catch(e) { return 0; }
+  }
+  async function updateRealNotifBadge() {
+    var n = await fetchRealNotifCount();
+    var badge = document.getElementById('notifBadge');
+    if (badge) {
+      badge.textContent = n;
+      badge.style.display = n > 0 ? '' : 'none';
+    }
+  }
+  // Poll every 30 seconds
+  setInterval(updateRealNotifBadge, 30000);
+  // Update on load
+  setTimeout(updateRealNotifBadge, 2000);
 })();
 </script>
 
