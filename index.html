@@ -2204,6 +2204,25 @@ try{refresh();buildJobSchema()}catch(e){}
   }, false);
   // Poll every 30 seconds
   setInterval(updateRealNotifBadge, 30000);
+  // === FIX: Refresh home feed after new posts ===
+  // Wrap apiPost to refresh feed on successful listing creation
+  var _origApiPost = apiPost;
+  apiPost = async function(path, body) {
+    var result = await _origApiPost(path, body);
+    if (result && result.ok && path.indexOf('/api/listings') === 0) {
+      // Refresh the feed data
+      try {
+        if (typeof K === 'function') {
+          setTimeout(function() { K(); }, 1000);
+        }
+        // Also try to re-render the mixed feed
+        setTimeout(function() {
+          try { if (typeof renderMixedFeed === 'function') renderMixedFeed('all'); } catch(e) {}
+        }, 1500);
+      } catch(e) {}
+    }
+    return result;
+  };
   // Update on load
   setTimeout(updateRealNotifBadge, 2000);
 
