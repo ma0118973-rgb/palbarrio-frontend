@@ -2247,6 +2247,30 @@ try{refresh();buildJobSchema()}catch(e){}
     try {
       if (typeof renderProfile === 'function') renderProfile();
     } catch(e) {}
+    // Show type-specific dashboard content
+    setTimeout(function() {
+      try {
+        var profileView = document.getElementById('view-profile') || document.querySelector('[data-view="profile"]');
+        if (!profileView) return;
+        // Remove old type banner
+        var oldBanner = document.getElementById('pbTypeBanner');
+        if (oldBanner) oldBanner.remove();
+        // Create banner for shop/portfolio
+        if (ptype === 'shop' || ptype === 'tienda') {
+          var banner = document.createElement('div');
+          banner.id = 'pbTypeBanner';
+          banner.style.cssText = 'background:#c4502a;color:#fff;padding:12px;margin:10px;border-radius:8px;text-align:center;font-weight:bold;';
+          banner.innerHTML = '🏪 Mi Tienda — Tu negocio';
+          profileView.insertBefore(banner, profileView.firstChild);
+        } else if (ptype === 'portfolio') {
+          var banner2 = document.createElement('div');
+          banner2.id = 'pbTypeBanner';
+          banner2.style.cssText = 'background:#1e5c46;color:#fff;padding:12px;margin:10px;border-radius:8px;text-align:center;font-weight:bold;';
+          banner2.innerHTML = '🎨 Portafolio — Tu trabajo';
+          profileView.insertBefore(banner2, profileView.firstChild);
+        }
+      } catch(e) {}
+    }, 500);
   }, false);
   // Restore saved type on load
   setTimeout(function() {
