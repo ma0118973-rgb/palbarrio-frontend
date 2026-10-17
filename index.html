@@ -2204,6 +2204,23 @@ try{refresh();buildJobSchema()}catch(e){}
   }, false);
   // Poll every 30 seconds
   setInterval(updateRealNotifBadge, 30000);
+  // === FIX: Home feed must show ALL posts (like Publish view) ===
+  // Intercept home navigation to force refresh
+  document.addEventListener('click', function(ev) {
+    var homeBtn = ev.target.closest('[data-goto="home"], #bnavHome, .bnav-home');
+    if (homeBtn) {
+      setTimeout(function() {
+        try {
+          if (typeof K === 'function') K();
+          setTimeout(function() {
+            try { if (typeof renderMixedFeed === 'function') renderMixedFeed('all'); } catch(e) {}
+            try { if (typeof renderFeed === 'function') renderFeed(); } catch(e) {}
+          }, 800);
+        } catch(e) {}
+      }, 300);
+    }
+  }, false);
+
   // === FIX: Refresh home feed after new posts ===
   // Wrap apiPost to refresh feed on successful listing creation
   var _origApiPost = apiPost;
