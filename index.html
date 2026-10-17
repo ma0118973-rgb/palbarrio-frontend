@@ -2183,12 +2183,25 @@ try{refresh();buildJobSchema()}catch(e){}
   }
   async function updateRealNotifBadge() {
     var n = await fetchRealNotifCount();
+    // Facebook-style: only show NEW notifications since last seen
+    var lastSeen = parseInt(localStorage.getItem('pb_notif_seen') || '0', 10);
+    var now = Date.now();
+    // If panel was opened recently, don't show badge (user has seen them)
+    if (now - lastSeen < 60000) n = 0;
     var badge = document.getElementById('notifBadge');
     if (badge) {
       badge.textContent = n;
       badge.style.display = n > 0 ? '' : 'none';
     }
   }
+  // When bell is clicked, mark as seen (clear badge like Facebook)
+  document.addEventListener('click', function(ev) {
+    if (ev.target.closest('#hdrBellBtn')) {
+      localStorage.setItem('pb_notif_seen', String(Date.now()));
+      var badge = document.getElementById('notifBadge');
+      if (badge) badge.style.display = 'none';
+    }
+  }, false);
   // Poll every 30 seconds
   setInterval(updateRealNotifBadge, 30000);
   // Update on load
