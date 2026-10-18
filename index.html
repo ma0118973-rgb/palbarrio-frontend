@@ -2204,22 +2204,53 @@ try{refresh();buildJobSchema()}catch(e){}
   }, false);
   // Poll every 30 seconds
   setInterval(updateRealNotifBadge, 30000);
-  // === FIX: Home feed must show ALL posts (like Publish view) ===
-  // Intercept home navigation to force refresh
+  // === FIX: Home feed must show ALL posts - DIRECT API RENDER ===
+  // The C() merge is not working for user posts. Fetch directly and display.
+  async function renderHomeDirect() {
+    try {
+      var feedEl = document.getElementById('homeMixedFeed');
+      if (!feedEl) return;
+      var resp = await fetch('/api/listings?limit=50');
+      if (!resp.ok) return;
+      var data = await resp.json();
+      var items = data.items || [];
+      if (!items.length) return;
+      // Build simple post cards for each listing
+      var html = items.map(function(item) {
+        var title = (item.title || '').toString().substring(0, 100);
+        var desc = (item.description || '').toString().substring(0, 200);
+        var author = item.author_name || 'Vecino';
+        var time = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+        return '<div class="feed-item" style="border:1px solid #ddd;border-radius:8px;padding:12px;margin:10px 0;background:#fff;">' +
+          '<div style="font-weight:bold;margin-bottom:6px;">' + title.replace(/</g, '&lt;') + '</div>' +
+          '<div style="color:#555;font-size:.9rem;margin-bottom:6px;">' + desc.replace(/</g, '&lt;') + '</div>' +
+          '<div style="color:#888;font-size:.8rem;">' + author.replace(/</g, '&lt;') + ' • ' + time + '</div>' +
+          '</div>';
+      }).join('');
+      // Prepend to existing feed (don't replace, just add missing)
+      var tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      // Only add items not already in feed (check by title)
+      var existingTitles = Array.from(feedEl.querySelectorAll('.feed-item')).map(function(el) {
+        return el.textContent.substring(0, 50);
+      });
+      Array.from(tempDiv.children).forEach(function(child) {
+        var childTitle = child.textContent.substring(0, 50);
+        if (existingTitles.indexOf(childTitle) === -1) {
+          feedEl.insertBefore(child, feedEl.firstChild);
+        }
+      });
+    } catch(e) { console.log('[PB] Home direct render failed:', e); }
+  }
+  // Call on home navigation and periodically
   document.addEventListener('click', function(ev) {
-    var homeBtn = ev.target.closest('[data-goto="home"], #bnavHome, .bnav-home');
+    var homeBtn = ev.target.closest('[data-goto="home"], [data-bnav="home"]');
     if (homeBtn) {
-      setTimeout(function() {
-        try {
-          if (typeof K === 'function') K();
-          setTimeout(function() {
-            try { if (typeof renderMixedFeed === 'function') renderMixedFeed('all'); } catch(e) {}
-            try { if (typeof renderFeed === 'function') renderFeed(); } catch(e) {}
-          }, 800);
-        } catch(e) {}
-      }, 300);
+      setTimeout(renderHomeDirect, 800);
     }
   }, false);
+  // Also call on page load
+  setTimeout(renderHomeDirect, 2000);
 
   // === FIX: Refresh home feed after new posts ===
   // Wrap apiPost to refresh feed on successful listing creation
